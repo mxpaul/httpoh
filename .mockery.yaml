@@ -1,0 +1,14 @@
+inpackage: True
+with-expecter: True
+case: underscore
+inpackage-suffix: true
+disable-version-string: true
+packages:
+  github.com/mxpaul/httpoh:
+    # place your package-specific config here
+    config:
+    interfaces:
+        # select the interfaces you want mocked
+        Request:
+          # Modify package-level config for this specific interface (if applicable)
+          config:
