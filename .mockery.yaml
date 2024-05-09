@@ -1,14 +1,12 @@
-inpackage: True
 with-expecter: True
-case: underscore
-inpackage-suffix: true
+#inpackage-suffix: true
 disable-version-string: true
+filename: "mock_{{.InterfaceName | lower }}.go"
+mockname: "{{ .Mock }}{{ .InterfaceName }}"
+dir: "{{ .InterfaceDirRelative}}"
 packages:
   github.com/mxpaul/httpoh:
-    # place your package-specific config here
-    config:
     interfaces:
-        # select the interfaces you want mocked
-        Request:
-          # Modify package-level config for this specific interface (if applicable)
-          config:
+      # select the interfaces you want mocked
+      Request:
+      Response:
