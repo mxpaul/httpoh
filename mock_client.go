@@ -5,7 +5,6 @@ package httpoh
 import (
 	context "context"
 
-	httpoh "github.com/mxpaul/httpoh"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -23,7 +22,7 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 }
 
 // PerformRequest provides a mock function with given fields: ctx, req, res
-func (_m *MockClient) PerformRequest(ctx context.Context, req httpoh.Request, res httpoh.Response) error {
+func (_m *MockClient) PerformRequest(ctx context.Context, req Request, res Response) error {
 	ret := _m.Called(ctx, req, res)
 
 	if len(ret) == 0 {
@@ -31,7 +30,7 @@ func (_m *MockClient) PerformRequest(ctx context.Context, req httpoh.Request, re
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, httpoh.Request, httpoh.Response) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, Request, Response) error); ok {
 		r0 = rf(ctx, req, res)
 	} else {
 		r0 = ret.Error(0)
@@ -47,15 +46,15 @@ type MockClient_PerformRequest_Call struct {
 
 // PerformRequest is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req httpoh.Request
-//   - res httpoh.Response
+//   - req Request
+//   - res Response
 func (_e *MockClient_Expecter) PerformRequest(ctx interface{}, req interface{}, res interface{}) *MockClient_PerformRequest_Call {
 	return &MockClient_PerformRequest_Call{Call: _e.mock.On("PerformRequest", ctx, req, res)}
 }
 
-func (_c *MockClient_PerformRequest_Call) Run(run func(ctx context.Context, req httpoh.Request, res httpoh.Response)) *MockClient_PerformRequest_Call {
+func (_c *MockClient_PerformRequest_Call) Run(run func(ctx context.Context, req Request, res Response)) *MockClient_PerformRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(httpoh.Request), args[2].(httpoh.Response))
+		run(args[0].(context.Context), args[1].(Request), args[2].(Response))
 	})
 	return _c
 }
@@ -65,7 +64,7 @@ func (_c *MockClient_PerformRequest_Call) Return(_a0 error) *MockClient_PerformR
 	return _c
 }
 
-func (_c *MockClient_PerformRequest_Call) RunAndReturn(run func(context.Context, httpoh.Request, httpoh.Response) error) *MockClient_PerformRequest_Call {
+func (_c *MockClient_PerformRequest_Call) RunAndReturn(run func(context.Context, Request, Response) error) *MockClient_PerformRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

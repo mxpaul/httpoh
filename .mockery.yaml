@@ -4,6 +4,7 @@ disable-version-string: true
 filename: "mock_{{.InterfaceName | lower }}.go"
 mockname: "{{ .Mock }}{{ .InterfaceName }}"
 dir: "{{ .InterfaceDirRelative}}"
+inpackage: true
 packages:
   github.com/mxpaul/httpoh:
     interfaces:
