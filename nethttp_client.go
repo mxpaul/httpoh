@@ -60,16 +60,26 @@ func NewClientNative(cfg Config, httpClient *http.Client) (*ClientNative, error)
 		HTTP:      httpClient,
 		UserAgent: cfg.UserAgent,
 	}
+	if c.UserAgent == "" {
+		c.UserAgent = defaultUserAgent()
+	}
 	return c, nil
 }
 
-func (c *ClientNative) PerformRequest(ctx context.Context, req Request, resp Response) error {
+func defaultUserAgent() string {
+	return "Mozilla/5.0 (Linux; Android 11; Pixel 3a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.101 Mobile Safari/537.36"
+}
 
-	netReq, _ := http.NewRequestWithContext(ctx, req.Method(), req.URL(), nil)
+func (c *ClientNative) PerformRequest(ctx context.Context, req Request, resp Response) error {
+	httpRequestMethod, httpRequestURL := req.Method(), req.URL()
+
+	netReq, _ := http.NewRequestWithContext(ctx, httpRequestMethod, httpRequestURL, nil)
+	netReq.Header.Set("User-Agent", c.UserAgent)
+
 	netResp, _ := c.HTTP.Do(netReq)
 	fmt.Printf("CODE: %d\n", netResp.StatusCode)
 
-	_ = resp.ProcessResponse(netResp)
+	err := resp.ProcessResponse(netResp)
 
-	return nil
+	return err
 }
