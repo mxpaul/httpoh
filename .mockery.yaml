@@ -7,6 +7,8 @@ dir: "{{ .InterfaceDirRelative}}"
 inpackage: true
 packages:
   github.com/mxpaul/httpoh:
+    config:
+      inpackage: true
     interfaces:
       # select the interfaces you want mocked
       Client:
