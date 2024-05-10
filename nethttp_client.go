@@ -78,11 +78,23 @@ func (c *ClientNative) PerformRequest(ctx context.Context, req Request, resp Res
 	}
 
 	netReq.Header.Set("User-Agent", c.UserAgent)
+	if hReq, implements := req.(RequestWithHeaders); implements {
+		for name, vals := range hReq.Headers() {
+			for i, value := range vals {
+				if _, exist := netReq.Header[name]; i == 0 && exist {
+					netReq.Header.Set(name, value)
+				} else {
+					netReq.Header.Add(name, value)
+				}
+			}
+		}
+	}
 
 	netResp, err := c.HTTP.Do(netReq)
 	if err != nil {
 		return err
 	}
+	defer netResp.Body.Close()
 
 	err = resp.ProcessResponse(netResp)
 

@@ -14,6 +14,11 @@ type Request interface {
 	URL() string
 }
 
+type RequestWithHeaders interface {
+	Request
+	Headers() http.Header
+}
+
 //Body() io.Reader
 
 type Response interface {

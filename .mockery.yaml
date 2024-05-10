@@ -9,4 +9,5 @@ packages:
     interfaces:
       # select the interfaces you want mocked
       Request:
+      RequestWithHeaders:
       Response:

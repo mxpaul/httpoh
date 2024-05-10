@@ -199,3 +199,72 @@ func TestPerformRequest(t *testing.T) {
 		})
 	}
 }
+
+func TestRequestWithHeaders(t *testing.T) {
+	for _, tc := range []struct {
+		Name           string
+		Config         Config
+		ServerHandler  http.Handler
+		RequestMethod  string
+		RequestHeaders http.Header
+	}{
+		{
+			Name:          "two headers",
+			RequestMethod: "POST",
+			Config:        Config{UserAgent: "UA"},
+			RequestHeaders: http.Header{
+				"h1": []string{"v1", "v2"},
+				"h2": []string{"v3"},
+			},
+			ServerHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodPost, r.Method)
+				assert.Equal(t, "UA", r.Header.Get("User-Agent"))
+				assert.Equal(t, []string{"v1", "v2"}, r.Header.Values("h1"))
+				assert.Equal(t, "v3", r.Header.Get("h2"))
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("OK"))
+			}),
+		},
+		{
+			Name:          "override useragent",
+			RequestMethod: "POST",
+			Config:        Config{UserAgent: "UA"},
+			RequestHeaders: http.Header{
+				"User-Agent": []string{"v1"},
+				"h2":         []string{"v2"},
+			},
+			ServerHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodPost, r.Method)
+				assert.Equal(t, []string{"v1"}, r.Header.Values("User-Agent"))
+				assert.Equal(t, []string{"v2"}, r.Header.Values("h2"))
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("OK"))
+			}),
+		},
+	} {
+		t.Run(tc.Name, func(t *testing.T) {
+			server := httptest.NewServer(tc.ServerHandler)
+			defer server.Close()
+
+			req := NewMockRequestWithHeaders(t)
+			req.EXPECT().URL().Return(server.URL)
+			req.EXPECT().Method().Return(tc.RequestMethod)
+			req.EXPECT().Headers().Return(tc.RequestHeaders)
+
+			client, newError := NewClientNative(tc.Config, server.Client())
+			require.NoError(t, newError)
+
+			resp := NewMockResponse(t)
+			resp.EXPECT().ProcessResponse(mock.Anything).RunAndReturn(func(r *http.Response) error {
+				assert.Equal(t, r.StatusCode, http.StatusOK)
+				body := bytes.NewBuffer(make([]byte, 0, 2))
+				io.Copy(body, r.Body)
+				assert.Equal(t, body.String(), "OK")
+				return nil
+			})
+
+			gotError := client.PerformRequest(context.Background(), req, resp)
+			assert.NoError(t, gotError)
+		})
+	}
+}
