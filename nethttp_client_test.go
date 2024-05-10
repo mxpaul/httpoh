@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -250,6 +251,59 @@ func TestRequestWithHeaders(t *testing.T) {
 			req.EXPECT().URL().Return(server.URL)
 			req.EXPECT().Method().Return(tc.RequestMethod)
 			req.EXPECT().Headers().Return(tc.RequestHeaders)
+
+			client, newError := NewClientNative(tc.Config, server.Client())
+			require.NoError(t, newError)
+
+			resp := NewMockResponse(t)
+			resp.EXPECT().ProcessResponse(mock.Anything).RunAndReturn(func(r *http.Response) error {
+				assert.Equal(t, r.StatusCode, http.StatusOK)
+				body := bytes.NewBuffer(make([]byte, 0, 2))
+				io.Copy(body, r.Body)
+				assert.Equal(t, body.String(), "OK")
+				return nil
+			})
+
+			gotError := client.PerformRequest(context.Background(), req, resp)
+			assert.NoError(t, gotError)
+		})
+	}
+}
+
+func TestRequestWithBody(t *testing.T) {
+	for _, tc := range []struct {
+		Name          string
+		Config        Config
+		ServerHandler http.Handler
+		RequestMethod string
+		RequestBody   io.Reader
+	}{
+		{
+			Name:          "post request with body",
+			RequestMethod: "POST",
+			Config:        Config{UserAgent: "UA"},
+			RequestBody:   strings.NewReader("BODY"),
+			ServerHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodPost, r.Method)
+				assert.Equal(t, "UA", r.Header.Get("User-Agent"))
+
+				body := bytes.NewBuffer(make([]byte, 0, 4))
+				io.Copy(body, r.Body)
+				assert.Equal(t, body.String(), "BODY")
+
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("OK"))
+			}),
+		},
+	} {
+		t.Run(tc.Name, func(t *testing.T) {
+			server := httptest.NewServer(tc.ServerHandler)
+			defer server.Close()
+
+			req := NewMockRequestWithBody(t)
+			req.EXPECT().URL().Return(server.URL)
+			req.EXPECT().Method().Return(tc.RequestMethod)
+			req.EXPECT().Body().Return(tc.RequestBody)
 
 			client, newError := NewClientNative(tc.Config, server.Client())
 			require.NoError(t, newError)

@@ -2,6 +2,7 @@ package httpoh
 
 import (
 	"context"
+	"io"
 	"net/http"
 )
 
@@ -19,7 +20,10 @@ type RequestWithHeaders interface {
 	Headers() http.Header
 }
 
-//Body() io.Reader
+type RequestWithBody interface {
+	Request
+	Body() io.Reader
+}
 
 type Response interface {
 	ProcessResponse(r *http.Response) error

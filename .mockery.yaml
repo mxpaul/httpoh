@@ -8,6 +8,8 @@ packages:
   github.com/mxpaul/httpoh:
     interfaces:
       # select the interfaces you want mocked
+      Client:
       Request:
       RequestWithHeaders:
+      RequestWithBody:
       Response:
