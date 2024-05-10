@@ -3,7 +3,6 @@ package httpoh
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"net"
 	"net/http"
 
@@ -73,13 +72,19 @@ func defaultUserAgent() string {
 func (c *ClientNative) PerformRequest(ctx context.Context, req Request, resp Response) error {
 	httpRequestMethod, httpRequestURL := req.Method(), req.URL()
 
-	netReq, _ := http.NewRequestWithContext(ctx, httpRequestMethod, httpRequestURL, nil)
+	netReq, err := http.NewRequestWithContext(ctx, httpRequestMethod, httpRequestURL, nil)
+	if err != nil {
+		return err
+	}
+
 	netReq.Header.Set("User-Agent", c.UserAgent)
 
-	netResp, _ := c.HTTP.Do(netReq)
-	fmt.Printf("CODE: %d\n", netResp.StatusCode)
+	netResp, err := c.HTTP.Do(netReq)
+	if err != nil {
+		return err
+	}
 
-	err := resp.ProcessResponse(netResp)
+	err = resp.ProcessResponse(netResp)
 
 	return err
 }

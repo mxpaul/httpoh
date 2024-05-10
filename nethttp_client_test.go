@@ -75,6 +75,7 @@ func TestPerformRequest(t *testing.T) {
 		Name              string
 		Config            Config
 		ServerHandler     http.Handler
+		ServerStopped     bool
 		RequestMethod     string
 		RequestURL        string
 		ResponseProcessor func(*http.Response) error
@@ -120,6 +121,29 @@ func TestPerformRequest(t *testing.T) {
 			},
 		},
 		{
+			Name:          "new request error",
+			Config:        Config{},
+			RequestMethod: "GET\n",
+			ServerHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("OK"))
+			}),
+			WantErrorMatch: []string{"invalid method"},
+		},
+		{
+			Name:          "no server response",
+			Config:        Config{},
+			RequestMethod: "GET",
+			ServerStopped: true,
+			ServerHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("OK"))
+			}),
+			WantErrorMatch: []string{"connection refused"},
+		},
+		{
 			Name: "get response error",
 			Config: Config{
 				UserAgent: "custom ua",
@@ -159,6 +183,9 @@ func TestPerformRequest(t *testing.T) {
 				resp.EXPECT().ProcessResponse(mock.Anything).RunAndReturn(tc.ResponseProcessor)
 			}
 
+			if tc.ServerStopped {
+				server.Close()
+			}
 			gotError := client.PerformRequest(context.Background(), req, resp)
 
 			if tc.WantErrorMatch == nil {
