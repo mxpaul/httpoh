@@ -3,13 +3,13 @@ package httpoh
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,12 +50,18 @@ func TestSuccessRequest(t *testing.T) {
 	client, newError := NewClientNative(cfg, server.Client())
 	require.NoError(t, newError)
 
-	req := testRequest{url: server.URL, method: http.MethodGet}
-	resp := testResponse{}
+	req := NewMockRequest(t)
+	req.EXPECT().URL().Return(server.URL)
+	req.EXPECT().Method().Return(http.MethodGet)
 
-	gotError := client.PerformRequest(context.Background(), req, &resp)
-	fmt.Printf("After\n")
+	resp := NewMockResponse(t)
+	resp.EXPECT().ProcessResponse(mock.Anything).Run(func(r *http.Response) {
+		assert.Equal(t, r.StatusCode, http.StatusOK)
+		body := bytes.NewBuffer(make([]byte, 0, 100))
+		io.Copy(body, r.Body)
+		assert.Equal(t, body.String(), "OK")
+	}).Return(nil)
+
+	gotError := client.PerformRequest(context.Background(), req, resp)
 	assert.NoError(t, gotError)
-	assert.Equal(t, resp.code, http.StatusOK)
-	assert.Equal(t, string(resp.body), "OK")
 }
